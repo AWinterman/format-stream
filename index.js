@@ -1,28 +1,29 @@
 var stream = require('stream')
   , util = require('util')
 
-module.exports = Between
+module.exports = Format
 
-util.inherits(Between, stream.Transform)
+util.inherits(Format, stream.Transform)
 
 // Pass through until you come to the token, at
 // which point you start reading from the first argument until it emits its
 // end event.
 
-function Between(token, stream) {
+function Format(token, template_variable) {
   stream.Transform.call(this)
-  this.stream = stream
+  this.stream = template_variable
   this.token = token
   this._cache = []
 }
 
-Between.prototype._transform(chunk, encoding, done) {
+Format.prototype._transform = function(chunk, encoding, done) {
   if(chunk !== this.token) {
     return this.push(chunk)
-  } 
+  }
 
   if(this._cache.length) {
     this.push(this._cache.reduce(flatten, []))
+
     return done()
   }
 
