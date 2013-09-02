@@ -31,7 +31,7 @@ var tokenizer = new Sentinal(new Buffer(token))
 
 outside_stream
     .pipe(tokenizer)
-    .pipe(between)
+    .pipe(inject)
     .pipe(process.stdout)
 ```
 
