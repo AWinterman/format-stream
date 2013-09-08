@@ -9,38 +9,47 @@ util.inherits(Format, stream.Transform)
 // which point you start reading from the first argument until it emits its
 // end event.
 
-function Format(token, template_variable) {
+function Format(context, match) {
   stream.Transform.call(this)
   this.stream = template_variable
-  this.token = token
-  this._cache = []
+  this.match = match || equal
+  this.context = context
+  this._cache = {}
 }
 
 Format.prototype._transform = function(chunk, encoding, done) {
-  if(chunk !== this.token) {
-    return this.push(chunk)
+  var flag = this.match(chunk, this.context)
+
+  if(!flag) {
+    this.push(chunk)
+
+    return done()
   }
 
-  if(this._cache.length) {
-    this.push(this._cache.reduce(flatten, []))
+  if(this._cache[flag].length) {
+    this.push(this._cache[flag].reduce(flatten, []))
 
     return done()
   }
 
   this.pause()
-  this.stream.on('data', emit(this))
+  this.stream.on('data', emit(this, flag))
   this.stream.on('end', resume(this))
   done()
+}
+
+function equal(lhs, rhs) {
+  return lhs === rhs
 }
 
 function flatten(lhs, rhs) {
   return lhs.concat(rhs)
 }
 
-function emit(self) {
+function emit(self, flag) {
   return function(data) {
     self.push(data)
-    self._cache.push(data)
+    self._cache[flag].push(data)
   }
 }
 
